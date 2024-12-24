@@ -1,0 +1,35 @@
+name: Release
+
+on:
+    workflow_dispatch:
+    push:
+        branches: [master]
+
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - name: Set up Node.Js
+              uses: actions/setup-node@v2
+              with:
+                node-version: '20.15.1'
+            - name: get version
+              id: version
+              uses: vrkit-platform/github-action-json5-property@release
+              with:
+                  path: "plugin.json5"
+                  prop_path: "Version"
+            - run: echo ${{steps.version.outputs.prop}}
+            - name: Install & Package
+              run: |
+                npm install
+                npm run build
+                zip -r VRKit-Leaderboard-${{steps.version.outputs.prop}}.zip . -x '*.git*'
+            - name: Publish
+              uses: softprops/action-gh-release@v1
+              with:
+                  files: "VRKit-Leaderboard-${{steps.version.outputs.prop}}.zip"
+                  tag_name: "v${{steps.version.outputs.prop}}"
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
