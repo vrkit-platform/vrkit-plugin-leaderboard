@@ -19,7 +19,7 @@ jobs:
               uses: vrkit-platform/github-action-json5-property@release
               with:
                   path: "plugin.json5"
-                  prop_path: "Version"
+                  prop_path: "version"
             - run: echo ${{steps.version.outputs.prop}}
             - name: Install & Package
               run: |
