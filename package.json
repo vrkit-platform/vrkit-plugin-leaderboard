@@ -14,11 +14,11 @@
   },
   "main": "dist/bundled-plugin.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "build:watch": "tsc -p tsconfig.json -w",
-    "bundle": "node esbuild.config.mjs",
-    "bundle:watch": "cross-env BUILD_WATCH=1 node esbuild.config.mjs",
-    "dev": "concurrently npm:build:watch npm:bundle:watch"
+    "compile": "tsc -p tsconfig.json",
+    "compile:watch": "tsc -p tsconfig.json -w",
+    "build": "npm run compile && node esbuild.config.mjs",
+    "build:watch": "cross-env BUILD_WATCH=1 node esbuild.config.mjs",
+    "dev": "concurrently npm:compile:watch npm:build:watch"
   },
   "types": "lib/index.d.ts",
   "dependencies": {
