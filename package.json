@@ -1,5 +1,5 @@
 {
-  "name": "vrkit-plugin-internal",
+  "name": "@vrkit-platform/plugin-leaderboard",
   "version": "1.0.0",
   "description": "VRKit Platform Leaderboard Plugin",
   "license": "ISC",
@@ -18,7 +18,10 @@
     "compile:watch": "tsc -p tsconfig.json -w",
     "build": "npm run compile && node esbuild.config.mjs",
     "build:watch": "cross-env BUILD_WATCH=1 node esbuild.config.mjs",
-    "dev": "concurrently npm:compile:watch npm:build:watch"
+    "dev": "concurrently npm:compile:watch npm:build:watch",
+    "version": "yarn build && node ./scripts/set-plugin-version.mjs",
+    "postversion": "node ./scripts/release.mjs latest",
+    "release": "yarn version --patch --non-interactive"
   },
   "types": "lib/index.d.ts",
   "dependencies": {
@@ -58,10 +61,12 @@
     "concurrently": "^9.1.0",
     "cross-env": "^7.0.3",
     "esbuild": "^0.24.0",
+    "json5": "^2.2.3",
     "moment": "^2.30.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "two.js": "latest",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "zx": "^8.3.0"
   }
 }
