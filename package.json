@@ -1,6 +1,6 @@
 {
   "name": "@vrkit-platform/plugin-leaderboard",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "VRKit Platform Leaderboard Plugin",
   "license": "ISC",
   "private": false,
@@ -46,6 +46,9 @@
   },
   "devDependencies": {
     "@3fv/ditsy": "^1.0.13",
+    "@emotion/cache": "^11.13.1",
+    "@emotion/react": "^11.13.0",
+    "@emotion/styled": "^11.13.0",
     "@types/lodash": "^4.17.13",
     "@types/node": "^22.10.2",
     "@types/react": "18.3.1",
@@ -54,9 +57,6 @@
     "@vrkit-platform/plugin-sdk": "^1.0.0",
     "@vrkit-platform/shared": "1.0.0",
     "@vrkit-platform/shared-ui": "1.0.0",
-    "@emotion/cache": "^11.13.1",
-    "@emotion/react": "^11.13.0",
-    "@emotion/styled": "^11.13.0",
     "builtin-modules": "^4.0.0",
     "concurrently": "^9.1.0",
     "cross-env": "^7.0.3",
