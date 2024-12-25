@@ -7,15 +7,15 @@ import { IPluginComponentProps } from "@vrkit-platform/plugin-sdk"
 import React from "react"
 import clsx from "clsx"
 import { styled } from "@mui/material/styles"
-// import {
-//   alpha, createClassNames, FillWidth, FlexAuto, FlexRowCenter, hasCls, rem
-// } from "@vrkit-platform/shared-ui"
+import {
+  alpha, createClassNames, FillWidth, FlexAuto, FlexRowCenter, hasCls, rem
+} from "@vrkit-platform/shared-ui"
 
 const log = getLogger(__filename)
 
 const classNamePrefix = "leaderboardPlugin"
 
-// const classNames = createClassNames(classNamePrefix, "root")
+const classNames = createClassNames(classNamePrefix, "root")
 
 const LeaderboardViewRoot = styled(
     Box,
@@ -23,14 +23,14 @@ const LeaderboardViewRoot = styled(
 )(
     ({ theme }) => {
       return {
-        // [hasCls(classNames.root)]: {
-        //   borderRadius: rem(1),
-        //   backgroundColor: alpha(theme.palette.grey.A700, 0.9),
-        //   color: theme.palette.getContrastText(theme.palette.grey.A700), ...FillWidth, ...FlexRowCenter,
-        //   "& > time": {
-        //     ...FlexAuto
-        //   }
-        // }
+        [hasCls(classNames.root)]: {
+          borderRadius: rem(1),
+          backgroundColor: alpha(theme.palette.grey.A700, 0.9),
+          color: theme.palette.getContrastText(theme.palette.grey.A700), ...FillWidth, ...FlexRowCenter,
+          "& > time": {
+            ...FlexAuto
+          }
+        }
       }
     })
 
@@ -44,7 +44,7 @@ function LeaderboardView({
 }:LeaderboardViewProps) {
   return (
       <LeaderboardViewRoot
-          className={clsx(className)} {...other}>
+          className={clsx(classNames.root, className)} {...other}>
         Leaderboard will be here
       </LeaderboardViewRoot>
   )
