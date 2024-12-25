@@ -1,4 +1,5 @@
 import Os from "os"
+import Fs from "node:fs"
 import { $, fs as Fsx, echo, useBash, usePwsh } from "zx"
 
 $.verbose = true
@@ -48,4 +49,4 @@ export const pluginFiles = Fsx.globSync(pluginFilesGlobPattern).map(f => Fsx.rea
 assert(pluginFiles.length === 1, `Glob pattern ${pluginFilesGlobPattern} must match exactly 1, actual ${pluginFiles.length} in ${process.cwd()}`)
 
 export const pluginFile = pluginFiles[0]
-export const pluginFilename = Fsx.basename(pluginFile)
+export const pluginFilename = Fs.basename(pluginFile)
