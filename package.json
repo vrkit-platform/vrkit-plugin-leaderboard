@@ -1,6 +1,6 @@
 {
   "name": "@vrkit-platform/plugin-leaderboard",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "VRKit Platform Leaderboard Plugin",
   "license": "ISC",
   "private": false,
