@@ -26,7 +26,7 @@ jobs:
                 npm install -g yarn
                 yarn
                 yarn run build
-                zip -r VRKit-Leaderboard-${{steps.version.outputs.prop}}.zip . -x '*.git*'
+                zip -r VRKit-Leaderboard-${{steps.version.outputs.prop}}.zip dist package.json plugin.json5 assets/ src/
             - name: Publish
               uses: softprops/action-gh-release@v1
               with:
