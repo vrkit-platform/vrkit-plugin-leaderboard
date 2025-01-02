@@ -7,6 +7,10 @@
   "publishConfig": {
     "access": "public"
   },
+  "repository": {
+    "url": "https://github.com/vrkit-platform/vrkit-plugin-leaderboard.git",
+    "type": "git"
+  },
   "author": {
     "email": "support@3form.ventures",
     "name": "Jonathan Glanz",
@@ -16,8 +20,8 @@
   "scripts": {
     "compile": "tsc -p tsconfig.json",
     "compile:watch": "tsc -p tsconfig.json -w",
-    "build": "npm run compile && node esbuild.config.mjs",
-    "build:watch": "cross-env BUILD_WATCH=1 node esbuild.config.mjs",
+    "build": "npm run compile && cross-env node esbuild.config.mjs",
+    "build:watch": "cross-env NODE_ENV=development BUILD_WATCH=1 node esbuild.config.mjs",
     "dev": "concurrently npm:compile:watch npm:build:watch",
     "version": "yarn build && node ./scripts/set-plugin-version.mjs",
     "postversion": "node ./scripts/release.mjs latest",
@@ -28,6 +32,7 @@
     "@3fv/deferred": "^1.2.12",
     "@3fv/guard": "^1.4.38",
     "@3fv/logger-proxy": "^1.0.70",
+    "@3fv/prelude-ts": "^0.8.35",
     "@mui/material": "^6.3.0",
     "clsx": "^2.1.1",
     "lodash": "^4.17.21",

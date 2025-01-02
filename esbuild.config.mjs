@@ -14,6 +14,10 @@ async function run() {
     const opts = {
       entryPoints: ["src/index.ts"],
       bundle: true,
+      // prod: false,
+      // production: false,
+      jsxDev: true,
+      
       external: [
         "@3fv/guard",
         "@3fv/deferred",
@@ -32,6 +36,7 @@ async function run() {
         "@mui/x-tree-view",
         "usehooks-ts",
         "lodash",
+        "lodash/fp",
         "@vrkit-platform/*",
         "electron",
         "react",
@@ -43,7 +48,8 @@ async function run() {
       format: "cjs",
       target: "es2020",
       logLevel: "info",
-      sourcemap: prod ? false : "inline",
+      sourcemap: "both",
+      
       treeShaking: false,
       outfile
     }
