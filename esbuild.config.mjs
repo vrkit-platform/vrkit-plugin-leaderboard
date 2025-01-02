@@ -16,7 +16,7 @@ async function run() {
       bundle: true,
       // prod: false,
       // production: false,
-      jsxDev: true,
+      // jsxDev: true,
       
       external: [
         "@3fv/guard",
@@ -41,6 +41,7 @@ async function run() {
         "electron",
         "react",
         "react/jsx-runtime",
+        "react/jsx-dev-runtime",
         "react-dom",
         ...builtins
       ],

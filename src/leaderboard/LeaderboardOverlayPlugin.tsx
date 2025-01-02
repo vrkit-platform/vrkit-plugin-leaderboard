@@ -10,7 +10,14 @@ import Box, { type BoxProps } from "@mui/material/Box"
 import type { IPluginComponentProps, SessionInfoMessage } from "@vrkit-platform/plugin-sdk"
 import React, { useEffect, useCallback, useState } from "react"
 import { createTheme, ThemeProvider } from "@mui/material/styles"
-import { SessionDataVariableValueMap, SessionTiming } from "@vrkit-platform/models"
+import {
+  SessionDataAccess,
+  SessionDataVariableType,
+  SessionDataVariableValueMap,
+  SessionDataVarNamesKey,
+  SessionTiming,
+  toSessionDataVarNames
+} from "@vrkit-platform/models"
 import clsx from "clsx"
 import { styled } from "@mui/material/styles"
 import {
@@ -26,15 +33,74 @@ import {
   PositionAbsolute,
   rem
 } from "@vrkit-platform/shared-ui"
-import { defaults, Pair } from "@vrkit-platform/shared"
 import { asOption } from "@3fv/prelude-ts"
-import { orderBy, pick } from "lodash"
+import { getLogger } from "@3fv/logger-proxy"
 
-const log = console
+const log = getLogger(__filename)
 
 const classNamePrefix = "leaderboardPlugin"
 
 const classes = createClassNames(classNamePrefix, "root")
+
+const DataVarNames = toSessionDataVarNames(
+  "AirDensity",
+  "AirPressure",
+  "AirTemp",
+  "FogLevel",
+  "RelativeHumidity",
+  "Skies",
+  "TrackTempCrew",
+  "WeatherType",
+  "WindDir",
+  "WindVel",
+  "PitsOpen",
+  "RaceLaps",
+  "SessionFlags",
+  "SessionLapsRemain",
+  "SessionLapsRemainEx",
+  "SessionNum",
+  "AppSessionState",
+  "SessionTick",
+  "SessionTime",
+  "SessionTimeOfDay",
+  "SessionTimeRemain",
+  "SessionUniqueID",
+  "CarIdxEstTime",
+  "CarIdxClassPosition",
+  "CarIdxF2Time",
+  "CarIdxGear",
+  "CarIdxLap",
+  "CarIdxLapCompleted",
+  "CarIdxLapDistPct",
+  "CarIdxOnPitRoad",
+  "CarIdxPosition",
+  "CarIdxRPM",
+  "CarIdxSteer",
+  "CarIdxTrackSurface",
+  "CarIdxTrackSurfaceMaterial",
+  "CarIdxLastLapTime",
+  "CarIdxBestLapTime",
+  "CarIdxBestLapNum",
+  "PaceMode",
+  "Lat",
+  "Lon",
+  "CarIdxPaceLine",
+  "CarIdxPaceRow",
+  "CarIdxPaceFlags",
+  "LapLastLapTime"
+)
+
+type DataVarNamesKey = SessionDataVarNamesKey<typeof DataVarNames>
+
+interface RaceInfo {
+  trackName: string
+  sof: number
+  totalLaps: number
+  totalTime: number
+  isTimedRace: boolean
+  sessionType: "PRACTICE" | "QUALIFY" | "RACE"
+  
+}
 
 interface ParticipantInfo {
   idx: number // from info
@@ -125,8 +191,10 @@ function updateParticipantData(
   participantInfoMap: Record<number, ParticipantInfo>,
   dataVarValues: SessionDataVariableValueMap
 ): ParticipantData[] {
-  const participants = Array<ParticipantData>()
-  const participantInfos = window.Object.values(participantInfoMap)
+  const 
+      dataAccess = SessionDataAccess.create(dataVarValues, DataVarNames),
+      participants = Array<ParticipantData>(),
+      participantInfos = window.Object.values(participantInfoMap)
 
   for (const info of participantInfos) {
     const idx = info.idx
@@ -134,13 +202,13 @@ function updateParticipantData(
     try {
       const data = {
         idx,
-        lap: (dataVarValues["CarIdxLap"]?.values[idx] ?? -1) as number,
-        lapCompleted: (dataVarValues["CarIdxLapCompleted"]?.values[idx] ?? -1) as number,
-        lapPercentComplete: (dataVarValues["CarIdxLapDistPct"]?.values[idx] ?? -1) as number,
-        lapTimeBest: (dataVarValues["CarIdxBestLapTime"]?.values[idx] ?? -1) as number,
-        lapTimeLast: (dataVarValues["CarIdxLastLapTime"]?.values[idx] ?? -1) as number,
-        position: (dataVarValues["CarIdxPosition"]?.values[idx] ?? -1) as number,
-        classPosition: (dataVarValues["CarIdxClassPosition"]?.values[idx] ?? -1) as number,
+        lap: dataAccess.getNumber("CarIdxLap",idx, -1),
+        lapCompleted: dataAccess.getNumber("CarIdxLapCompleted",idx, -1),
+        lapPercentComplete: dataAccess.getNumber("CarIdxLapDistPct",idx, -1),
+        lapTimeBest: dataAccess.getNumber("CarIdxBestLapTime",idx, -1),
+        lapTimeLast: dataAccess.getNumber("CarIdxLastLapTime",idx, -1),
+        position: dataAccess.getNumber("CarIdxPosition",idx, -1),
+        classPosition: dataAccess.getNumber("CarIdxClassPosition",idx, -1),
         info
       }
       
