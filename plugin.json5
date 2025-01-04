@@ -128,6 +128,8 @@
           "CarIdxBestLapTime",
           "CarIdxBestLapNum",
           "PaceMode",
+          "RaceLaps",
+          "Lap",
           "Lat",
           "Lon",
           "CarIdxPaceLine",
