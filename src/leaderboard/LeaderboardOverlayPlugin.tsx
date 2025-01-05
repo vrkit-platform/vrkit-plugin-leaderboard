@@ -1,33 +1,27 @@
 import "@vrkit-platform/plugin-sdk"
+import type { IPluginComponentProps } from "@vrkit-platform/plugin-sdk"
 import {
   PluginClientEventType,
-  useVRKitPluginClient,
   useVRKitPluginClientEvent,
   useVRKitPluginClientSessionInfo
 } from "@vrkit-platform/plugin-sdk"
-import Box, { type BoxProps } from "@mui/material/Box"
-
-import type { IPluginComponentProps, SessionInfoMessage } from "@vrkit-platform/plugin-sdk"
-import React, { useEffect, useCallback, useState } from "react"
-import { createTheme, ThemeProvider } from "@mui/material/styles"
+import Box from "@mui/material/Box"
+import React, { useCallback, useEffect, useState } from "react"
+import { createTheme, styled, ThemeProvider } from "@mui/material/styles"
+import { SessionDataVariableValueMap, SessionTiming } from "@vrkit-platform/models"
 import {
-  SessionDataAccess,
-  SessionDataVariableType,
-  SessionDataVariableValueMap,
-  SessionDataVarNamesKey,
-  SessionTiming,
-  toSessionDataVarNames
-} from "@vrkit-platform/models"
-import clsx from "clsx"
-import { styled } from "@mui/material/styles"
-import {
-  alpha,
+  child,
   createClassNames,
+  Ellipsis,
   Fill,
   FillBounds,
-  FillWidth,
+  flexAlign,
   FlexAuto,
+  FlexAutoBox,
+  FlexColumn,
+  FlexRow,
   FlexRowCenter,
+  FlexScaleZeroBox,
   hasCls,
   OverflowHidden,
   padding,
@@ -35,8 +29,17 @@ import {
   rem,
   widthConstraint
 } from "@vrkit-platform/shared-ui"
-import { asOption } from "@3fv/prelude-ts"
 import { getLogger } from "@3fv/logger-proxy"
+import {
+  CarData,
+  DriverInfo,
+  RaceInfo,
+  updateCarData,
+  updateDriverInfo,
+  updateRaceInfo
+} from "./LeaderboardOverlayPlugin.data"
+import clsx from "clsx"
+import { capitalize } from "lodash"
 
 const log = getLogger(__filename)
 
@@ -48,222 +51,16 @@ if (!document.querySelector(`link[data-owner="leaderboard"]`)) {
 
 const classNamePrefix = "leaderboardPlugin"
 
-const classes = createClassNames(classNamePrefix, "root")
-
-const DataVarNames = toSessionDataVarNames(
-  "AirDensity",
-  "AirPressure",
-  "AirTemp",
-  "FogLevel",
-  "RelativeHumidity",
-  "Skies",
-  "TrackTempCrew",
-  "WeatherType",
-  "WindDir",
-  "WindVel",
-  "PitsOpen",
-  "RaceLaps",
-  "SessionFlags",
-  "SessionLapsRemain",
-  "SessionLapsRemainEx",
-  "SessionNum",
-  "AppSessionState",
-  "SessionTick",
-  "SessionTime",
-  "SessionTimeOfDay",
-  "SessionTimeRemain",
-  "SessionUniqueID",
-  "CarIdxEstTime",
-  "CarIdxClassPosition",
-  "CarIdxF2Time",
-  "CarIdxGear",
-  "CarIdxLap",
-  "CarIdxLapCompleted",
-  "CarIdxLapDistPct",
-  "CarIdxOnPitRoad",
-  "CarIdxPosition",
-  "CarIdxRPM",
-  "CarIdxSteer",
-  "CarIdxTrackSurface",
-  "CarIdxTrackSurfaceMaterial",
-  "CarIdxLastLapTime",
-  "CarIdxBestLapTime",
-  "CarIdxBestLapNum",
-  "PaceMode",
-  "Lap",
-  "RaceLaps",
-  "Lat",
-  "Lon",
-  "CarIdxPaceLine",
-  "CarIdxPaceRow",
-  "CarIdxPaceFlags",
-  "LapLastLapTime"
-)
-
-type DataVarNamesKey = SessionDataVarNamesKey<typeof DataVarNames>
-
-interface RaceInfo {
-  trackName: string
-
-  sof: number
-
-  weather: string
-
-  lap: number
-
-  lapsRemaining: number
-
-  sessionTimeRemaining: number
-
-  sessionTime: number
-
-  isTimedRace: boolean
-
-  sessionType: "PRACTICE" | "QUALIFY" | "RACE"
-}
-
-interface ParticipantInfo {
-  idx: number // from info
-  id: number
-
-  username: string // from info
-  iRating: number
-
-  license: string
-
-  licenseColor: string
-
-  safetyRating: number
-
-  isSpectator: boolean
-
-  carScreenName: string
-
-  carClassColor: string
-
-  carNumber: string // from info
-
-  curIncidentCount: number
-
-  curTeamIncidentCount: number
-}
-
-interface ParticipantData {
-  idx: number
-
-  lap: number // CarIdxLap
-  lapCompleted: number // CarIdxLapCompleted
-  lapPercentComplete: number // CarIdxLapDistPct
-  lapTimeBest: number
-
-  lapTimeLast: number
-
-  position: number // CarIdxPosition
-  classPosition: number // CarIdxClassPosition
-
-  info: ParticipantInfo
-}
-
-function updateRaceInfo(
-    sessionInfo: SessionInfoMessage,
-    participantData: ParticipantData[],
-    dataVarValues: SessionDataVariableValueMap
-): RaceInfo {
-  const dataAccess = SessionDataAccess.create(dataVarValues, DataVarNames),
-      data = participantData.filter(data => data.position > 0 && !!data.info),
-      totalStrength = data.reduce((totalStrength, data) => totalStrength + data.info.iRating, 0),
-      raceInfo: RaceInfo = {
-        sof: totalStrength / data.length,
-        weather: "",
-        trackName: sessionInfo?.weekendInfo?.trackDisplayName ?? "",
-        lap: dataAccess.getNumber("RaceLaps"),
-        lapsRemaining: dataAccess.getNumber("SessionLapsRemain"),
-        sessionTimeRemaining: dataAccess.getNumber("SessionTimeRemain"),
-        sessionTime: dataAccess.getNumber("SessionTime"),
-        isTimedRace: true,
-        sessionType: "RACE"
-      }
-  
-  return raceInfo
-}
-
-function updateParticipantInfo(
-  participants: Record<number, ParticipantInfo>,
-  sessionInfo: SessionInfoMessage
-): Record<number, ParticipantInfo> {
-  const drivers = sessionInfo?.driverInfo?.drivers
-
-  if (!drivers) {
-    // log.warn(`No drivers in session info`)
-    return participants ?? {}
-  }
-
-  const newParticipants: Record<number, ParticipantInfo> = {}
-  for (let driver of window.Object.values(drivers)) {
-    if (driver.carIsPaceCar || driver.isSpectator) {
-      // log.warn(`Ignoring driver is pace car or spectator`)
-      continue
-    }
-
-    const [licenseLetter, licenseSR] = asOption(driver.licString)
-      .map(s => s.split(" "))
-      .filter(it => it.length === 2)
-      .getOrElse(["R", "0"])
-
-    const participant: ParticipantInfo = Object.assign(participants[driver.carIdx] ?? ({} as ParticipantInfo), {
-      id: driver.carID,
-      idx: driver.carIdx,
-      carNumber: driver.carNumber,
-      username: driver.userName,
-      iRating: driver.iRating,
-      license: licenseLetter,
-      licenseColor: driver.licColor,
-      safetyRating: licenseSR,
-      isSpectator: driver.isSpectator,
-      curIncidentCount: driver.curDriverIncidentCount,
-      curTeamIncidentCount: driver.teamIncidentCount,
-      carScreenName: driver.carScreenName,
-      carClassColor: driver.carClassColor
-    }) as ParticipantInfo
-
-    newParticipants[participant.idx] = participant
-  }
-
-  return newParticipants
-}
-
-function updateParticipantData(
-  participantInfoMap: Record<number, ParticipantInfo>,
-  dataVarValues: SessionDataVariableValueMap
-): ParticipantData[] {
-  const dataAccess = SessionDataAccess.create(dataVarValues, DataVarNames),
-    participants = Array<ParticipantData>(),
-    participantInfos = window.Object.values(participantInfoMap)
-
-  for (const info of participantInfos) {
-    const idx = info.idx
-
-    try {
-      const data = {
-        idx,
-        lap: dataAccess.getNumber("CarIdxLap", idx, -1),
-        lapCompleted: dataAccess.getNumber("CarIdxLapCompleted", idx, -1),
-        lapPercentComplete: dataAccess.getNumber("CarIdxLapDistPct", idx, -1),
-        lapTimeBest: dataAccess.getNumber("CarIdxBestLapTime", idx, -1),
-        lapTimeLast: dataAccess.getNumber("CarIdxLastLapTime", idx, -1),
-        position: dataAccess.getNumber("CarIdxPosition", idx, -1),
-        classPosition: dataAccess.getNumber("CarIdxClassPosition", idx, -1),
-        info
-      }
-
-      participants.push(data)
-    } catch (err) {
-      log.error(`Unable to update ${idx}`, err)
-    }
-  }
-
-  return participants.sort((a, b) => a.position - b.position).filter(({ position }) => position > 0)
-}
+const classes = 
+    createClassNames(classNamePrefix, "root", "grid", "row", 
+        "rowLapAhead",
+        "rowLapBehind",
+        "rowLapCurrent",
+        "rowPlayer", 
+        "cell",
+        "cellPosition",
+        "cellIRating",
+        "cellRelativeTime")
 
 const LeaderboardViewRoot = styled(Box, { name: "LeaderboardViewRoot" })(({ theme }) => {
   return {
@@ -282,58 +79,97 @@ const LeaderboardViewRoot = styled(Box, { name: "LeaderboardViewRoot" })(({ them
   }
 })
 
-const LeaderboardTable = styled("table", { name: "LeaderboardTable" })(({ theme }) => {
+const LeaderboardGrid = styled("div", { name: "LeaderboardGrid" })(({ theme }) => {
   return {
-    ...PositionAbsolute,
-    ...FillBounds,
-    ...Fill,
-    ...OverflowHidden, // ...FlexRowCenter,
-    borderRadius: rem(1),
-    backgroundColor: "#242424",
-    color: "white",
-    fontFamily: `"magistral","Segoe UI", Tahoma, Geneva, Verdana, sans-serif`,
-    fontWeight: 800,
-    "& *": {
-      borderCollapse: "collapse",
-      borderSpacing: 0,
-      border: 0,
-      
-    },
-    "& thead": {
-      backgroundColor: "#242424",
+    [hasCls(classes.grid)]: {
+      ...PositionAbsolute,
+      ...FillBounds,
+      ...Fill,
+      ...OverflowHidden, // ...FlexRowCenter,
+      // display: "grid",
+      // gridTemplateColumns: `1rem auto 2rem 1rem`,
+      ...FlexColumn,
+      ...flexAlign("stretch", "flex-start"),
+      borderRadius: rem(1), // backgroundColor: "#242424",
       color: "white",
-      // backgroundColor: alpha("#ffffff", 1.0),
-      // color: "black",
-      "& th": {
-        
-      }
-    },
-    "& tbody": {
-      "& tr": {
-        margin:0,
-        border:0,
-        "& td": {
-          ...padding(0,rem(1)),
-          margin:0,
-          border:0,
-          "&:first-of-type": {
-            backgroundColor: "#F0F0F0",
-            color: "black",
-            textAlign: "center",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            ...widthConstraint(rem(1))
-          },
+      fontFamily: `"magistral","Segoe UI", Tahoma, Geneva, Verdana, sans-serif`,
+      fontWeight: 800,
+      "& *": {
+        // borderCollapse: "collapse",
+        // borderSpacing: 0,
+        border: 0
+      },
+      [child(classes.row)]: {
+        margin: 0,
+        border: 0,
+        ...OverflowHidden,
+        ...FlexAuto,
+        "&:first-of-type": {
+          backgroundColor: "#242424",
+          color: "white",
+          //gridColumn: "1 / span 4",
+          ...FlexRow,
+          ...padding(rem(0.5), rem(1)),
+          ...flexAlign("center", "stretch"),
+        },
+        "&:not(:first-of-type)": {
+          ...FlexRow,
           
-        },
-        
-        "&:nth-of-type(odd)": {
-          backgroundColor: "#141414",
-        },
-        
-        "&:nth-of-type(even)": {
-          backgroundColor: "#202020",
+          ...flexAlign("center", "stretch"),
+          [hasCls(classes.rowLapAhead)]: {
+            color: "#5B9DEE"
+          },
+          [hasCls(classes.rowLapBehind)]: {
+            color: "#6F162A"
+          },
+          [hasCls(classes.rowLapCurrent)]: {
+            color: "#F6F6F6"
+          },
+          [hasCls(classes.rowPlayer)]: {
+            color: "#E4BD2A"
+          },
+          "&:nth-of-type(odd)": {
+            backgroundColor: "#141414"
+          },
+
+          "&:nth-of-type(even)": {
+            backgroundColor: "#202020"
+          },
+
+          [child(classes.cell)]: {
+            ...padding(0, rem(1)),
+            ...OverflowHidden,
+            ...Ellipsis,
+            [hasCls(classes.cellPosition)]: {
+              // ...FlexRowCenter,
+              
+              // ...widthConstraint(rem(1)),
+              // ...Fill,
+              ...widthConstraint(rem(3.5)),
+              borderBottomRightRadius: rem(0.25),
+              backgroundColor: "#F0F0F0",
+              color: "black",
+              alignSelf: "center",
+              justifySelf: "center",
+              textAlign: "center",
+            },
+            [hasCls(classes.cellIRating)]: {
+              ...widthConstraint(rem(4)),
+              borderRadius: rem(0.25),
+              backgroundColor: "#F0F0F0",
+              color: "black",
+              alignSelf: "center",
+              justifySelf: "center",
+              textAlign: "center",
+            },
+            [hasCls(classes.cellRelativeTime)]: {
+              ...widthConstraint(rem(5.5)),
+              
+              alignSelf: "flex-end",
+              justifySelf: "center",
+              textAlign: "end",
+            }
+          }
         }
       }
     }
@@ -342,20 +178,18 @@ const LeaderboardTable = styled("table", { name: "LeaderboardTable" })(({ theme 
 
 export interface LeaderboardViewProps {}
 
-
-
 function LeaderboardView({ ...other }: LeaderboardViewProps) {
   const client = getVRKitPluginClient(),
     [raceInfo, setRaceInfo] = useState<RaceInfo>(),
     [sampleIndex, setSampleIndex] = useState(0),
-    [participantInfoMap, setParticipantInfoMap] = useState<Record<number, ParticipantInfo>>(() =>
-      updateParticipantInfo({}, client.getSessionInfo())
+    [driverInfoMap, setDriverInfoMap] = useState<Record<number, DriverInfo>>(() =>
+      updateDriverInfo({}, client.getSessionInfo())
     ),
-    [participantData, setParticipantData] = useState<Array<ParticipantData>>([]),
+    [carDatas, setCarDatas] = useState<Array<CarData>>([]),
     [dataVarValues, setDataVarValues] = useState<SessionDataVariableValueMap>({}),
     sessionInfo = useVRKitPluginClientSessionInfo(),
-      hasParticipantData = participantData.length > 0,
-      hasParticipantInfo = Object.keys(participantInfoMap).length > 0,
+    hasCarData = carDatas.length > 0,
+    hasDriverInfo = Object.keys(driverInfoMap).length > 0,
     handleSessionData = useCallback(
       (sessionId: string, timing: SessionTiming, newDataVarValues: SessionDataVariableValueMap) => {
         setSampleIndex(idx => idx + 1)
@@ -365,48 +199,76 @@ function LeaderboardView({ ...other }: LeaderboardViewProps) {
     )
 
   useEffect(() => {
-    setParticipantInfoMap(participantInfoMap => updateParticipantInfo(participantInfoMap, client.getSessionInfo()))
+    setDriverInfoMap(driverInfoMap => updateDriverInfo(driverInfoMap, client.getSessionInfo()))
   }, [sessionInfo])
 
   useEffect(() => {
-    if (dataVarValues && participantInfoMap && hasParticipantInfo && Object.keys(dataVarValues).length > 0) {
-      const newParticipantData = updateParticipantData(participantInfoMap, dataVarValues)
-      const newRaceInfo = updateRaceInfo(sessionInfo, newParticipantData, dataVarValues)
-      setParticipantData(newParticipantData)
+    if (sessionInfo?.driverInfo && dataVarValues && driverInfoMap && hasDriverInfo && Object.keys(dataVarValues).length > 0) {
+      const newCarDatas = updateCarData("RELATIVE", driverInfoMap, dataVarValues)
+      const newRaceInfo = updateRaceInfo(sessionInfo, newCarDatas, dataVarValues)
+      setCarDatas(newCarDatas)
       setRaceInfo(newRaceInfo)
     }
-  }, [participantInfoMap, dataVarValues])
+  }, [driverInfoMap, dataVarValues, sessionInfo?.driverInfo])
 
   useVRKitPluginClientEvent(PluginClientEventType.DATA_FRAME, handleSessionData)
 
-  return (hasParticipantInfo && hasParticipantData &&
-    <LeaderboardViewRoot {...other}>
-      {/*<Box>sampleIndex={sampleIndex}</Box>*/}
-      <Box>{`Session data updated (track=${sessionInfo?.weekendInfo?.trackDisplayName},session_id=${sessionInfo?.weekendInfo?.sessionID},sub_session_id=${sessionInfo?.weekendInfo?.subSessionID}`}</Box>
-      <LeaderboardTable>
-        <thead>
-          <tr>
-            <th colSpan={3}>
+  return (
+    
+    hasDriverInfo &&
+    hasCarData && (
+      <LeaderboardViewRoot {...other}>
+        {/*<Box>sampleIndex={sampleIndex}</Box>*/}
+        {/*<Box>{`Session data updated (track=${sessionInfo?.weekendInfo?.trackDisplayName},session_id=${sessionInfo?.weekendInfo?.sessionID},sub_session_id=${sessionInfo?.weekendInfo?.subSessionID}`}</Box>*/}
+        <LeaderboardGrid className={clsx(classes.grid)}>
+          <div className={clsx(classes.row)}>
+            <FlexAutoBox>{capitalize(raceInfo.sessionType)}</FlexAutoBox>
+            <FlexScaleZeroBox
+              sx={{ ...Ellipsis,
+                textAlign: "center",
+                alignSelf: "center",
+                justifySelf: "center",
+              }}
+              className={clsx(classes.cell)}
+            >
               SoF {(raceInfo?.sof / 1000.0).toFixed(1)}K
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {participantData.map((p, idx) => (
-            <tr key={idx}>
-              <td><span>{p.position}</span></td>
-              <td>{p.info.username}</td>
-              <td>{p.info.license}</td>
+            </FlexScaleZeroBox>
+            <FlexAutoBox>
+              {raceInfo.sessionTime.toFixed(2)} / {raceInfo.sessionTimeRemaining.toFixed(2)}
+              {/*{raceInfo.lap}/{raceInfo.lapsRemaining + raceInfo.lap}*/}
+            </FlexAutoBox>
+          </div>
+
+          {carDatas.map((p, idx) => (
+            <div
+              key={p.idx}
+              className={clsx(classes.row, {
+                [classes.rowPlayer]: p.driver?.isPlayer ?? false,
+              })}
+            >
+              <div className={clsx(classes.cell, classes.cellPosition)}>
+                <span>{p.position}</span>
+              </div>
+              <FlexScaleZeroBox
+                  sx={{...Ellipsis}}
+                  className={clsx(classes.cell)}
+              >
+                {p.driver.username} / {p.lap}
+              </FlexScaleZeroBox>
+              <div className={clsx(classes.cell, classes.cellIRating)}>{(p.driver.iRating / 1000).toFixed(1)}</div>
+              <div className={clsx(classes.cell, classes.cellRelativeTime)}>
+                {p.relativeTimeToPlayer?.toFixed?.(2) ?? "NA"}
+              </div>
               {/*<td>{p.info.carNumber}</td>*/}
               {/*<td>{p.lapTimeBest}</td>*/}
               {/*<td>{p.lapTimeLast}</td>*/}
               {/*<td>{p.lap}</td>*/}
               {/*<td>{p.lapPercentComplete}</td>*/}
-            </tr>
+            </div>
           ))}
-        </tbody>
-      </LeaderboardTable>
-    </LeaderboardViewRoot>
+        </LeaderboardGrid>
+      </LeaderboardViewRoot>
+    )
     // <LeaderboardViewRoot
     //   className={clsx(classNames.root, className)}
     //   sx={{
