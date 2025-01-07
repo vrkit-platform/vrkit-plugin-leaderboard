@@ -6,12 +6,13 @@ import {
   useVRKitPluginClientSessionInfo
 } from "@vrkit-platform/plugin-sdk"
 import Box from "@mui/material/Box"
-import React, { useCallback, useEffect, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { createTheme, styled, ThemeProvider } from "@mui/material/styles"
 import { SessionDataVariableValueMap, SessionTiming } from "@vrkit-platform/models"
 import {
   child,
   createClassNames,
+  DurationView,
   Ellipsis,
   Fill,
   FillBounds,
@@ -39,7 +40,8 @@ import {
   updateRaceInfo
 } from "./LeaderboardOverlayPlugin.data"
 import clsx from "clsx"
-import { capitalize } from "lodash"
+import { capitalize, debounce, throttle } from "lodash"
+import { asOption } from "@3fv/prelude-ts"
 
 const log = getLogger(__filename)
 
@@ -51,16 +53,21 @@ if (!document.querySelector(`link[data-owner="leaderboard"]`)) {
 
 const classNamePrefix = "leaderboardPlugin"
 
-const classes = 
-    createClassNames(classNamePrefix, "root", "grid", "row", 
-        "rowLapAhead",
-        "rowLapBehind",
-        "rowLapCurrent",
-        "rowPlayer", 
-        "cell",
-        "cellPosition",
-        "cellIRating",
-        "cellRelativeTime")
+const classes = createClassNames(
+  classNamePrefix,
+  "root",
+  "grid",
+  "row",
+  "rowLapAhead",
+  "rowLapBehind",
+  "rowLapCurrent",
+  "rowInPits",
+  "rowPlayer",
+  "cell",
+  "cellPosition",
+  "cellIRating",
+  "cellRelativeTime"
+)
 
 const LeaderboardViewRoot = styled(Box, { name: "LeaderboardViewRoot" })(({ theme }) => {
   return {
@@ -106,15 +113,14 @@ const LeaderboardGrid = styled("div", { name: "LeaderboardGrid" })(({ theme }) =
         ...FlexAuto,
         "&:first-of-type": {
           backgroundColor: "#242424",
-          color: "white",
-          //gridColumn: "1 / span 4",
+          color: "white", //gridColumn: "1 / span 4",
           ...FlexRow,
           ...padding(rem(0.5), rem(1)),
-          ...flexAlign("center", "stretch"),
+          ...flexAlign("center", "stretch")
         },
         "&:not(:first-of-type)": {
           ...FlexRow,
-          
+
           ...flexAlign("center", "stretch"),
           [hasCls(classes.rowLapAhead)]: {
             color: "#5B9DEE"
@@ -128,6 +134,10 @@ const LeaderboardGrid = styled("div", { name: "LeaderboardGrid" })(({ theme }) =
           [hasCls(classes.rowPlayer)]: {
             color: "#E4BD2A"
           },
+
+          [hasCls(classes.rowInPits)]: {
+            opacity: 0.5
+          },
           "&:nth-of-type(odd)": {
             backgroundColor: "#141414"
           },
@@ -137,37 +147,40 @@ const LeaderboardGrid = styled("div", { name: "LeaderboardGrid" })(({ theme }) =
           },
 
           [child(classes.cell)]: {
-            ...padding(0, rem(1)),
+            ...padding(rem(0.25), rem(0.5)),
             ...OverflowHidden,
             ...Ellipsis,
             [hasCls(classes.cellPosition)]: {
               // ...FlexRowCenter,
-              
+
               // ...widthConstraint(rem(1)),
               // ...Fill,
               ...widthConstraint(rem(3.5)),
-              borderBottomRightRadius: rem(0.25),
+              borderBottomRightRadius: rem(0.75),
               backgroundColor: "#F0F0F0",
               color: "black",
               alignSelf: "center",
               justifySelf: "center",
-              textAlign: "center",
+              textAlign: "center"
             },
             [hasCls(classes.cellIRating)]: {
               ...widthConstraint(rem(4)),
+              "&, & *": {
+                fontWeight: 700,
+              },
               borderRadius: rem(0.25),
               backgroundColor: "#F0F0F0",
               color: "black",
               alignSelf: "center",
               justifySelf: "center",
-              textAlign: "center",
+              textAlign: "center"
             },
             [hasCls(classes.cellRelativeTime)]: {
               ...widthConstraint(rem(5.5)),
-              
+
               alignSelf: "flex-end",
               justifySelf: "center",
-              textAlign: "end",
+              textAlign: "end"
             }
           }
         }
@@ -190,11 +203,11 @@ function LeaderboardView({ ...other }: LeaderboardViewProps) {
     sessionInfo = useVRKitPluginClientSessionInfo(),
     hasCarData = carDatas.length > 0,
     hasDriverInfo = Object.keys(driverInfoMap).length > 0,
-    handleSessionData = useCallback(
-      (sessionId: string, timing: SessionTiming, newDataVarValues: SessionDataVariableValueMap) => {
+    handleSessionData = useMemo(() =>
+      throttle((sessionId: string, timing: SessionTiming, newDataVarValues: SessionDataVariableValueMap) => {
         setSampleIndex(idx => idx + 1)
         setDataVarValues(newDataVarValues)
-      },
+      }, 100),
       []
     )
 
@@ -203,69 +216,87 @@ function LeaderboardView({ ...other }: LeaderboardViewProps) {
   }, [sessionInfo])
 
   useEffect(() => {
-    if (sessionInfo?.driverInfo && dataVarValues && driverInfoMap && hasDriverInfo && Object.keys(dataVarValues).length > 0) {
-      const newCarDatas = updateCarData("RELATIVE", driverInfoMap, dataVarValues)
+    if (
+      sessionInfo?.driverInfo &&
+      dataVarValues &&
+      driverInfoMap &&
+      hasDriverInfo &&
+      Object.keys(dataVarValues).length > 0
+    ) {
+      const newCarDatas = updateCarData("RELATIVE", sessionInfo, driverInfoMap, dataVarValues)
       const newRaceInfo = updateRaceInfo(sessionInfo, newCarDatas, dataVarValues)
       setCarDatas(newCarDatas)
       setRaceInfo(newRaceInfo)
     }
-  }, [driverInfoMap, dataVarValues, sessionInfo?.driverInfo])
+  }, [driverInfoMap, dataVarValues, sessionInfo])
 
   useVRKitPluginClientEvent(PluginClientEventType.DATA_FRAME, handleSessionData)
 
   return (
-    
     hasDriverInfo &&
     hasCarData && (
       <LeaderboardViewRoot {...other}>
-        {/*<Box>sampleIndex={sampleIndex}</Box>*/}
-        {/*<Box>{`Session data updated (track=${sessionInfo?.weekendInfo?.trackDisplayName},session_id=${sessionInfo?.weekendInfo?.sessionID},sub_session_id=${sessionInfo?.weekendInfo?.subSessionID}`}</Box>*/}
         <LeaderboardGrid className={clsx(classes.grid)}>
           <div className={clsx(classes.row)}>
             <FlexAutoBox>{capitalize(raceInfo.sessionType)}</FlexAutoBox>
             <FlexScaleZeroBox
-              sx={{ ...Ellipsis,
+              sx={{
+                ...Ellipsis,
                 textAlign: "center",
                 alignSelf: "center",
-                justifySelf: "center",
+                justifySelf: "center"
               }}
               className={clsx(classes.cell)}
             >
               SoF {(raceInfo?.sof / 1000.0).toFixed(1)}K
             </FlexScaleZeroBox>
             <FlexAutoBox>
-              {raceInfo.sessionTime.toFixed(2)} / {raceInfo.sessionTimeRemaining.toFixed(2)}
+              <DurationView millis={raceInfo.sessionTime * 1000}/> /
+              <DurationView millis={raceInfo.sessionTimeRemaining * 1000}/>
               {/*{raceInfo.lap}/{raceInfo.lapsRemaining + raceInfo.lap}*/}
             </FlexAutoBox>
           </div>
 
-          {carDatas.map((p, idx) => (
-            <div
-              key={p.idx}
-              className={clsx(classes.row, {
-                [classes.rowPlayer]: p.driver?.isPlayer ?? false,
-              })}
-            >
-              <div className={clsx(classes.cell, classes.cellPosition)}>
-                <span>{p.position}</span>
-              </div>
-              <FlexScaleZeroBox
-                  sx={{...Ellipsis}}
-                  className={clsx(classes.cell)}
+          {carDatas.map((p, idx) => {
+            return (
+              <div
+                key={p.idx}
+                className={clsx(classes.row, {
+                  [classes.rowPlayer]: p.driver?.isPlayer ?? false,
+                  [classes.rowInPits]: p.trackLocationSurface < 3
+                })}
               >
-                {p.driver.username} / {p.lap}
-              </FlexScaleZeroBox>
-              <div className={clsx(classes.cell, classes.cellIRating)}>{(p.driver.iRating / 1000).toFixed(1)}</div>
-              <div className={clsx(classes.cell, classes.cellRelativeTime)}>
-                {p.relativeTimeToPlayer?.toFixed?.(2) ?? "NA"}
+                <div
+                  className={clsx(classes.cell, classes.cellPosition)}
+                  style={{
+                    backgroundColor: `#${p.driver.carClassColor}`
+                  }}
+                >
+                  <span>{p.classPosition}</span>
+                </div>
+                <FlexScaleZeroBox
+                  sx={{ ...Ellipsis }}
+                  className={clsx(classes.cell)}
+                >
+                  {p.driver.username}
+                </FlexScaleZeroBox>
+                <div className={clsx(classes.cell, classes.cellIRating)}
+                     style={{
+                       backgroundColor: `#${p.driver.licenseColor}`
+                     }}
+                >{(p.driver.iRating / 1000).toFixed(1)}k {p.driver.license}</div>
+                <div className={clsx(classes.cell, classes.cellRelativeTime)}>
+                  {p.relativeTimeToPlayer.toFixed(2)}
+                  {/*{p.timeToLeader.toFixed(2)}*/}
+                </div>
+                {/*<td>{p.info.carNumber}</td>*/}
+                {/*<td>{p.lapTimeBest}</td>*/}
+                {/*<td>{p.lapTimeLast}</td>*/}
+                {/*<td>{p.lap}</td>*/}
+                {/*<td>{p.lapPercentComplete}</td>*/}
               </div>
-              {/*<td>{p.info.carNumber}</td>*/}
-              {/*<td>{p.lapTimeBest}</td>*/}
-              {/*<td>{p.lapTimeLast}</td>*/}
-              {/*<td>{p.lap}</td>*/}
-              {/*<td>{p.lapPercentComplete}</td>*/}
-            </div>
-          ))}
+            )
+          })}
         </LeaderboardGrid>
       </LeaderboardViewRoot>
     )
