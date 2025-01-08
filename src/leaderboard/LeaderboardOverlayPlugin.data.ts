@@ -336,7 +336,7 @@ export function updateCarData(
         totalDistance,
         relativeTimeToPlayer: 0,
         relativeDistanceToPlayer: 0,
-        timeToLeader: dataAccess.getNumber("CarIdxF2Time", idx, -1),
+        timeToLeader: 0,
         position: asOption(dataAccess.getNumber("CarIdxPosition", idx, -1))
           .filter(it => it > 0)
           .getOrElse(driver.qualifiedPosition),
@@ -411,5 +411,18 @@ export function updateCarData(
     // return cars.sort((a, b) => b.relativeTimeToPlayer -
     // a.relativeTimeToPlayer)
   }
-  return cars.sort((a, b) => a.position - b.position)
+  
+  const leaderCar = cars.find(data => data.position === 1)
+  if (leaderCar) {
+    cars.forEach(car => {
+      if (car.position === 1) {
+        car.timeToLeader = 0
+      } else {
+        const deltaDist = leaderCar.totalDistance - car.totalDistance
+        
+        car.timeToLeader = deltaDist / car.estSpeed
+      }
+    })
+  }
+  return cars.sort((a, b) => a.timeToLeader - b.timeToLeader)
 }

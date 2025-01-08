@@ -1,82 +1,102 @@
 {
-  id: '858a6138-0854-476b-92c1-f1da4a37a48d',
-  version: '1.0.13',
-  name: 'VRKit Leaderboard',
-  description: 'A configurable leaderboard overlay',
+  id: "858a6138-0854-476b-92c1-f1da4a37a48d",
+  version: "1.0.13",
+  name: "VRKit Leaderboard",
+  description: "A configurable leaderboard overlay",
   author: {
-    company: '3FV',
-    name: 'Jonathan Glanz',
-    email: 'support@3form.ventures',
+    company: "3FV",
+    name: "Jonathan Glanz",
+    email: "support@3form.ventures"
   },
   overview: {
-    content: 'A configurable leaderboard overlay',
-    featureContent: 'A real time, configurable leaderboard overlay',
-    changeLogContent: 'v1.0.0\n- initial release',
+    content: "A configurable leaderboard overlay",
+    featureContent: "A real time, configurable leaderboard overlay",
+    changeLogContent: "v1.0.0\n- initial release",
     screenshots: [],
-    manifestUrl: 'https://raw.githubusercontent.com/vrkit-platform/vrkit-plugin-leaderboard/refs/heads/master/plugin.json5',
-    websiteUrl: 'https://github.com/vrkit-platform/vrkit-plugin-leaderboard',
-    iconUrl: 'https://cdn.jsdelivr.net/gh/vrkit-platform/vrkit-plugin-leaderboard@master/assets/icon.png?raw=true',
-    sourceUrl: 'https://github.com/vrkit-platform/vrkit-plugin-leaderboard',
-    downloadUrl: 'https://github.com/vrkit-platform/vrkit-plugin-leaderboard/releases/download/v1.0.9/vrkit-plugin-leaderboard.zip',
+    manifestUrl: "https://raw.githubusercontent.com/vrkit-platform/vrkit-plugin-leaderboard/refs/heads/master/plugin.json5",
+    websiteUrl: "https://github.com/vrkit-platform/vrkit-plugin-leaderboard",
+    iconUrl: "https://cdn.jsdelivr.net/gh/vrkit-platform/vrkit-plugin-leaderboard@master/assets/icon.png?raw=true",
+    sourceUrl: "https://github.com/vrkit-platform/vrkit-plugin-leaderboard",
+    downloadUrl: "https://github.com/vrkit-platform/vrkit-plugin-leaderboard/releases/download/v1.0.9/vrkit-plugin-leaderboard.zip"
   },
   components: [
     {
-      id: '858a6138-0854-476b-92c1-f1da4a37a48d::leaderboard',
-      type: 'OVERLAY',
-      name: 'Leaderboard',
-      description: 'A configurable leaderboard overlay',
-      supportedGames: [
-        'IRACING',
-      ],
+      id: "858a6138-0854-476b-92c1-f1da4a37a48d::leaderboard",
+      type: "OVERLAY",
+      name: "Leaderboard",
+      description: "A configurable leaderboard overlay",
+      supportedGames: ["IRACING"],
       overview: {
-        featureContent: '- Multiclass support\n- Configurable colors\n- More to come ...',
-        changeLogContent: '### 1.0.0\n\n- Initial release',
-        screenshots: [],
+        featureContent: "- Multiclass support\n- Configurable colors\n- More to come ...",
+        changeLogContent: "### 1.0.0\n\n- Initial release",
+        screenshots: []
       },
       uiResource: {
         icon: {
-          format: 'SVG',
+          format: "SVG",
           isDataUrl: true,
-          url: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgICAgdmll d0JveD0iLTIwIC0yMCA1NTIgNTUyIj4KICAgIDxwYXRoIGQ9Ik0xNiA5NmMwLTI2 LjUgMjEuNS00OCA0OC00OGwzODQgMGMyNi41IDAgNDggMjEuNSA0OCA0OGwwIDY0 TDE2IDE2MGwwLTY0em0yMzIgODBsMCAxMjhMMTYgMzA0bDAtMTI4IDIzMiAwem0x NiAwbDIzMiAwIDAgMTI4LTIzMiAwIDAtMTI4ek0yNDggMzIwbDAgMTQ0TDY0IDQ2 NGMtMjYuNSAwLTQ4LTIxLjUtNDgtNDhsMC05NiAyMzIgMHptMTYgMTQ0bDAtMTQ0 IDIzMiAwIDAgOTZjMCAyNi41LTIxLjUgNDgtNDggNDhsLTE4NCAwek0wIDQxNmMw IDM1LjMgMjguNyA2NCA2NCA2NGwzODQgMGMzNS4zIDAgNjQtMjguNyA2NC02NGww LTMyMGMwLTM1LjMtMjguNy02NC02NC02NEw2NCAzMkMyOC43IDMyIDAgNjAuNyAw IDk2TDAgNDE2eiIvPgo8L3N2Zz4=',
-        },
+          url: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgICAgdmll d0JveD0iLTIwIC0yMCA1NTIgNTUyIj4KICAgIDxwYXRoIGQ9Ik0xNiA5NmMwLTI2 LjUgMjEuNS00OCA0OC00OGwzODQgMGMyNi41IDAgNDggMjEuNSA0OCA0OGwwIDY0 TDE2IDE2MGwwLTY0em0yMzIgODBsMCAxMjhMMTYgMzA0bDAtMTI4IDIzMiAwem0x NiAwbDIzMiAwIDAgMTI4LTIzMiAwIDAtMTI4ek0yNDggMzIwbDAgMTQ0TDY0IDQ2 NGMtMjYuNSAwLTQ4LTIxLjUtNDgtNDhsMC05NiAyMzIgMHptMTYgMTQ0bDAtMTQ0 IDIzMiAwIDAgOTZjMCAyNi41LTIxLjUgNDgtNDggNDhsLTE4NCAwek0wIDQxNmMw IDM1LjMgMjguNyA2NCA2NCA2NGwzODQgMGMzNS4zIDAgNjQtMjguNyA2NC02NGww LTMyMGMwLTM1LjMtMjguNy02NC02NC02NEw2NCAzMkMyOC43IDMyIDAgNjAuNyAw IDk2TDAgNDE2eiIvPgo8L3N2Zz4="
+        }
       },
       userSettings: {
-        'car.player': {
-          id: 'car.player',
-          name: 'Player color',
-          description: 'Color of the dot representing you, the player on the map',
-          type: 'COLOR',
+        "view.mode": {
+          id: "view.mode",
+          name: "View Mode",
+          description: "View either race standings or relative",
+          type: "CHOICE",
+          choiceLimit: 1,
+          choices: [
+            {
+              value: "RELATIVE",
+              label: "Relative",
+              description: "View leaderboard relative to the active player."
+            },
+            {
+              value: "STANDINGS",
+              label: "Standings",
+              description: "View overall leaderboard."
+            }
+          ],
           defaultValue: {
-            colorValue: '#FF0000',
-          },
+            choiceValues: ["STANDINGS"]
+          }
         },
-        'car.class1': {
-          id: 'car.class1',
-          name: 'Class 1 color',
-          description: 'Color the top car class in the race (dots)',
-          type: 'COLOR',
+        "car.player": {
+          id: "car.player",
+          name: "Player color",
+          description: "Color of the dot representing you, the player on the map",
+          type: "COLOR",
           defaultValue: {
-            colorValue: '#00FF00',
-          },
+            colorValue: "#FF0000"
+          }
         },
-        'car.class2': {
-          id: 'car.class2',
-          name: 'Class 2 color',
-          description: 'Color the 2nd car class in the race (dots)',
-          type: 'COLOR',
+        "car.class1": {
+          id: "car.class1",
+          name: "Class 1 color",
+          description: "Color the top car class in the race (dots)",
+          type: "COLOR",
           defaultValue: {
-            colorValue: '#00FFFF',
-          },
+            colorValue: "#00FF00"
+          }
         },
-        'car.class3': {
-          id: 'car.class3',
-          name: 'Class 1 color',
-          description: 'Color the 3rd car class in the race (dots)',
-          type: 'COLOR',
+        "car.class2": {
+          id: "car.class2",
+          name: "Class 2 color",
+          description: "Color the 2nd car class in the race (dots)",
+          type: "COLOR",
           defaultValue: {
-            colorValue: '#0000FF',
-          },
+            colorValue: "#00FFFF"
+          }
         },
+        "car.class3": {
+          id: "car.class3",
+          name: "Class 1 color",
+          description: "Color the 3rd car class in the race (dots)",
+          type: "COLOR",
+          defaultValue: {
+            colorValue: "#0000FF"
+          }
+        }
       },
       overlayCommonSettings: {
         canResize: true,
@@ -84,59 +104,59 @@
         fps: 0,
         initialSize: {
           height: 300,
-          width: 400,
-        },
+          width: 400
+        }
       },
       overlayIracingSettings: {
         dataVariablesUsed: [
-          'AirDensity',
-          'AirPressure',
-          'AirTemp',
-          'FogLevel',
-          'RelativeHumidity',
-          'Skies',
-          'TrackTempCrew',
-          'WeatherType',
-          'WindDir',
-          'WindVel',
-          'PitsOpen',
-          'RaceLaps',
-          'SessionFlags',
-          'SessionLapsRemain',
-          'SessionLapsRemainEx',
-          'SessionNum',
-          'SessionState',
-          'SessionTick',
-          'SessionTime',
-          'SessionTimeOfDay',
-          'SessionTimeRemain',
-          'SessionUniqueID',
-          'CarIdxEstTime',
-          'CarIdxClassPosition',
-          'CarIdxF2Time',
-          'CarIdxPosition',
-          'CarIdxLap',
-          'CarIdxLapCompleted',
-          'CarIdxLapDistPct',
-          'CarIdxGear',
-          'CarIdxOnPitRoad',
-          'CarIdxRPM',
-          'CarIdxSteer',
-          'CarIdxTrackSurface',
-          'CarIdxTrackSurfaceMaterial',
-          'CarIdxLastLapTime',
-          'CarIdxBestLapTime',
-          'CarIdxBestLapNum',
-          'PaceMode',
-          'Lap',
-          'Lat',
-          'Lon',
-          'CarIdxPaceLine',
-          'CarIdxPaceRow',
-          'CarIdxPaceFlags',
-          'LapLastLapTime',
-        ],
-      },
-    },
-  ],
+          "AirDensity",
+          "AirPressure",
+          "AirTemp",
+          "FogLevel",
+          "RelativeHumidity",
+          "Skies",
+          "TrackTempCrew",
+          "WeatherType",
+          "WindDir",
+          "WindVel",
+          "PitsOpen",
+          "RaceLaps",
+          "SessionFlags",
+          "SessionLapsRemain",
+          "SessionLapsRemainEx",
+          "SessionNum",
+          "SessionState",
+          "SessionTick",
+          "SessionTime",
+          "SessionTimeOfDay",
+          "SessionTimeRemain",
+          "SessionUniqueID",
+          "CarIdxEstTime",
+          "CarIdxClassPosition",
+          "CarIdxF2Time",
+          "CarIdxPosition",
+          "CarIdxLap",
+          "CarIdxLapCompleted",
+          "CarIdxLapDistPct",
+          "CarIdxGear",
+          "CarIdxOnPitRoad",
+          "CarIdxRPM",
+          "CarIdxSteer",
+          "CarIdxTrackSurface",
+          "CarIdxTrackSurfaceMaterial",
+          "CarIdxLastLapTime",
+          "CarIdxBestLapTime",
+          "CarIdxBestLapNum",
+          "PaceMode",
+          "Lap",
+          "Lat",
+          "Lon",
+          "CarIdxPaceLine",
+          "CarIdxPaceRow",
+          "CarIdxPaceFlags",
+          "LapLastLapTime"
+        ]
+      }
+    }
+  ]
 }

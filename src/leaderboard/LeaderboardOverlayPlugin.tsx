@@ -24,6 +24,7 @@ import {
   FlexRowCenter,
   FlexScaleZeroBox,
   hasCls,
+  heightConstraint,
   OverflowHidden,
   padding,
   PositionAbsolute,
@@ -34,14 +35,16 @@ import { getLogger } from "@3fv/logger-proxy"
 import {
   CarData,
   DriverInfo,
+  LeaderboardMode,
   RaceInfo,
   updateCarData,
   updateDriverInfo,
   updateRaceInfo
 } from "./LeaderboardOverlayPlugin.data"
 import clsx from "clsx"
-import { capitalize, debounce, throttle } from "lodash"
+import { capitalize, debounce, range, throttle } from "lodash"
 import { asOption } from "@3fv/prelude-ts"
+import { isNotEmpty } from "@vrkit-platform/shared"
 
 const log = getLogger(__filename)
 
@@ -86,6 +89,21 @@ const LeaderboardViewRoot = styled(Box, { name: "LeaderboardViewRoot" })(({ them
   }
 })
 
+function getRemSize() {
+  // Get the root element's font size
+  return parseFloat(
+      getComputedStyle(document.documentElement).fontSize
+  )
+}
+const RemSize = getRemSize()
+
+const 
+    
+    Heights = {
+      header: Math.floor(RemSize * 1.5),
+      row: Math.floor(RemSize * 1.5),
+    }
+
 const LeaderboardGrid = styled("div", { name: "LeaderboardGrid" })(({ theme }) => {
   return {
     [hasCls(classes.grid)]: {
@@ -97,6 +115,7 @@ const LeaderboardGrid = styled("div", { name: "LeaderboardGrid" })(({ theme }) =
       // gridTemplateColumns: `1rem auto 2rem 1rem`,
       ...FlexColumn,
       ...flexAlign("stretch", "flex-start"),
+      backgroundColor: "#040404",
       borderRadius: rem(1), // backgroundColor: "#242424",
       color: "white",
       fontFamily: `"magistral","Segoe UI", Tahoma, Geneva, Verdana, sans-serif`,
@@ -113,14 +132,16 @@ const LeaderboardGrid = styled("div", { name: "LeaderboardGrid" })(({ theme }) =
         ...FlexAuto,
         "&:first-of-type": {
           backgroundColor: "#242424",
-          color: "white", //gridColumn: "1 / span 4",
+          color: "white", //gridColumn: "1 /
+          // span 4",
           ...FlexRow,
           ...padding(rem(0.5), rem(1)),
+          ...heightConstraint(Heights.header),
           ...flexAlign("center", "stretch")
         },
         "&:not(:first-of-type)": {
           ...FlexRow,
-
+          ...heightConstraint(Heights.row),
           ...flexAlign("center", "stretch"),
           [hasCls(classes.rowLapAhead)]: {
             color: "#5B9DEE"
@@ -166,7 +187,7 @@ const LeaderboardGrid = styled("div", { name: "LeaderboardGrid" })(({ theme }) =
             [hasCls(classes.cellIRating)]: {
               ...widthConstraint(rem(4)),
               "&, & *": {
-                fontWeight: 700,
+                fontWeight: 700
               },
               borderRadius: rem(0.25),
               backgroundColor: "#F0F0F0",
@@ -189,12 +210,18 @@ const LeaderboardGrid = styled("div", { name: "LeaderboardGrid" })(({ theme }) =
   }
 })
 
-export interface LeaderboardViewProps {}
+export interface LeaderboardViewProps extends IPluginComponentProps {}
 
-function LeaderboardView({ ...other }: LeaderboardViewProps) {
-  const client = getVRKitPluginClient(),
+function LeaderboardView({ width, height, client, ...other }: LeaderboardViewProps) {
+  const
+      visibleRows = Math.floor((height - Heights.header) / Heights.row),
+      overlayInfo = client.getOverlayInfo(),
+    settings = overlayInfo.userSettingValues,
+    viewMode = asOption(settings?.["view.mode"]?.choiceValues)
+      .map(values => values[0])
+      .filter(isNotEmpty)
+      .getOrElse("STANDINGS" satisfies LeaderboardMode) as LeaderboardMode,
     [raceInfo, setRaceInfo] = useState<RaceInfo>(),
-    [sampleIndex, setSampleIndex] = useState(0),
     [driverInfoMap, setDriverInfoMap] = useState<Record<number, DriverInfo>>(() =>
       updateDriverInfo({}, client.getSessionInfo())
     ),
@@ -203,11 +230,11 @@ function LeaderboardView({ ...other }: LeaderboardViewProps) {
     sessionInfo = useVRKitPluginClientSessionInfo(),
     hasCarData = carDatas.length > 0,
     hasDriverInfo = Object.keys(driverInfoMap).length > 0,
-    handleSessionData = useMemo(() =>
-      throttle((sessionId: string, timing: SessionTiming, newDataVarValues: SessionDataVariableValueMap) => {
-        setSampleIndex(idx => idx + 1)
-        setDataVarValues(newDataVarValues)
-      }, 100),
+    handleSessionData = useMemo(
+      () =>
+        throttle((sessionId: string, timing: SessionTiming, newDataVarValues: SessionDataVariableValueMap) => {
+          setDataVarValues(newDataVarValues)
+        }, 100),
       []
     )
 
@@ -223,7 +250,7 @@ function LeaderboardView({ ...other }: LeaderboardViewProps) {
       hasDriverInfo &&
       Object.keys(dataVarValues).length > 0
     ) {
-      const newCarDatas = updateCarData("RELATIVE", sessionInfo, driverInfoMap, dataVarValues)
+      const newCarDatas = updateCarData(viewMode, sessionInfo, driverInfoMap, dataVarValues)
       const newRaceInfo = updateRaceInfo(sessionInfo, newCarDatas, dataVarValues)
       setCarDatas(newCarDatas)
       setRaceInfo(newRaceInfo)
@@ -231,7 +258,19 @@ function LeaderboardView({ ...other }: LeaderboardViewProps) {
   }, [driverInfoMap, dataVarValues, sessionInfo])
 
   useVRKitPluginClientEvent(PluginClientEventType.DATA_FRAME, handleSessionData)
-
+  
+  let adjustedCarDatas = [...carDatas]
+  if (viewMode === "RELATIVE" && visibleRows < carDatas.length) {
+    const aboveRows = Math.floor(visibleRows / 2),
+        playerIdx = carDatas.findIndex(p => p.driver.isPlayer)
+    
+    if (playerIdx > aboveRows) {
+      for (const _idx of range(0,playerIdx - aboveRows)) {
+        adjustedCarDatas.push(adjustedCarDatas.shift())
+      }
+    }
+    adjustedCarDatas.length = visibleRows + 1
+  }
   return (
     hasDriverInfo &&
     hasCarData && (
@@ -251,13 +290,13 @@ function LeaderboardView({ ...other }: LeaderboardViewProps) {
               SoF {(raceInfo?.sof / 1000.0).toFixed(1)}K
             </FlexScaleZeroBox>
             <FlexAutoBox>
-              <DurationView millis={raceInfo.sessionTime * 1000}/> /
-              <DurationView millis={raceInfo.sessionTimeRemaining * 1000}/>
+              <DurationView millis={raceInfo.sessionTime * 1000} /> /
+              <DurationView millis={raceInfo.sessionTimeRemaining * 1000} />
               {/*{raceInfo.lap}/{raceInfo.lapsRemaining + raceInfo.lap}*/}
             </FlexAutoBox>
           </div>
 
-          {carDatas.map((p, idx) => {
+          {adjustedCarDatas.map((p, idx) => {
             return (
               <div
                 key={p.idx}
@@ -280,14 +319,16 @@ function LeaderboardView({ ...other }: LeaderboardViewProps) {
                 >
                   {p.driver.username}
                 </FlexScaleZeroBox>
-                <div className={clsx(classes.cell, classes.cellIRating)}
-                     style={{
-                       backgroundColor: `#${p.driver.licenseColor}`
-                     }}
-                >{(p.driver.iRating / 1000).toFixed(1)}k {p.driver.license}</div>
+                <div
+                  className={clsx(classes.cell, classes.cellIRating)}
+                  style={{
+                    backgroundColor: `#${p.driver.licenseColor}`
+                  }}
+                >
+                  {(p.driver.iRating / 1000).toFixed(1)}k {p.driver.license}
+                </div>
                 <div className={clsx(classes.cell, classes.cellRelativeTime)}>
-                  {p.relativeTimeToPlayer.toFixed(2)}
-                  {/*{p.timeToLeader.toFixed(2)}*/}
+                  {viewMode === "RELATIVE" ? p.relativeTimeToPlayer.toFixed(2) : p.timeToLeader.toFixed(2)}
                 </div>
                 {/*<td>{p.info.carNumber}</td>*/}
                 {/*<td>{p.lapTimeBest}</td>*/}
@@ -313,12 +354,11 @@ function LeaderboardView({ ...other }: LeaderboardViewProps) {
 }
 
 function LeaderboardOverlayPlugin(props: IPluginComponentProps) {
-  const { client, width, height } = props,
-    theme = createTheme()
+  const theme = createTheme()
 
   return (
     <ThemeProvider theme={theme}>
-      <LeaderboardView />
+      <LeaderboardView {...props} />
     </ThemeProvider>
   )
 }
