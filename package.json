@@ -32,7 +32,7 @@
     "@3fv/deferred": "^1.2.12",
     "@3fv/guard": "^1.4.38",
     "@3fv/logger-proxy": "^1.0.70",
-    "@3fv/prelude-ts": "^0.8.35",
+    "@3fv/prelude-ts": "^0.8.37",
     "@mui/material": "^6.3.0",
     "clsx": "^2.1.1",
     "lodash": "^4.17.21",
