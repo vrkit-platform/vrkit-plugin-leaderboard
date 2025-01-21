@@ -64,43 +64,7 @@
               'STANDINGS',
             ],
           },
-        },
-        'car.player': {
-          id: 'car.player',
-          name: 'Player color',
-          description: 'Color of the dot representing you, the player on the map',
-          type: 'COLOR',
-          defaultValue: {
-            colorValue: '#FF0000',
-          },
-        },
-        'car.class1': {
-          id: 'car.class1',
-          name: 'Class 1 color',
-          description: 'Color the top car class in the race (dots)',
-          type: 'COLOR',
-          defaultValue: {
-            colorValue: '#00FF00',
-          },
-        },
-        'car.class2': {
-          id: 'car.class2',
-          name: 'Class 2 color',
-          description: 'Color the 2nd car class in the race (dots)',
-          type: 'COLOR',
-          defaultValue: {
-            colorValue: '#00FFFF',
-          },
-        },
-        'car.class3': {
-          id: 'car.class3',
-          name: 'Class 1 color',
-          description: 'Color the 3rd car class in the race (dots)',
-          type: 'COLOR',
-          defaultValue: {
-            colorValue: '#0000FF',
-          },
-        },
+        }
       },
       overlayCommonSettings: {
         canResize: true,
