@@ -1,6 +1,6 @@
 {
   "name": "@vrkit-platform/plugin-leaderboard",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "VRKit Platform Leaderboard Plugin",
   "license": "ISC",
   "private": false,
@@ -22,7 +22,7 @@
     "compile:watch": "tsc -p tsconfig.json -w",
     "build": "npm run compile && cross-env node esbuild.config.mjs",
     "build:watch": "cross-env NODE_ENV=development BUILD_WATCH=1 node esbuild.config.mjs",
-    "dev": "concurrently npm:compile:watch npm:build:watch",
+    "dev": "cross-env NODE_ENV=development BUILD_WATCH=1 concurrently --kill-others npm:compile:watch npm:build:watch",
     "version": "yarn build && node ./scripts/set-plugin-version.mjs",
     "postversion": "node ./scripts/release.mjs latest",
     "release": "yarn version --patch --non-interactive"
@@ -37,7 +37,6 @@
     "clsx": "^2.1.1",
     "lodash": "^4.17.21",
     "moment": "^2.30.1",
-    "two.js": "latest",
     "usehooks-ts": "^3.1.0"
   },
   "peerDependencies": {
