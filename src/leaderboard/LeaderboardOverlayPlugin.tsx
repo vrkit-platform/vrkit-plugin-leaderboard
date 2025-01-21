@@ -108,8 +108,13 @@ const LeaderboardGrid = styled("div", { name: "LeaderboardGrid" })(({ theme }) =
   return {
     [hasCls(classes.grid)]: {
       ...PositionAbsolute,
-      ...FillBounds,
-      ...Fill,
+      top: 0,
+      left: 0,
+      right: 0,
+      maxHeight: "100%",
+      height: "auto",
+      // ...FillBounds,
+      // ...Fill,
       ...OverflowHidden, // ...FlexRowCenter,
       // display: "grid",
       // gridTemplateColumns: `1rem auto 2rem 1rem`,
@@ -120,11 +125,7 @@ const LeaderboardGrid = styled("div", { name: "LeaderboardGrid" })(({ theme }) =
       color: "white",
       fontFamily: `"magistral","Segoe UI", Tahoma, Geneva, Verdana, sans-serif`,
       fontWeight: 800,
-      "& *": {
-        // borderCollapse: "collapse",
-        // borderSpacing: 0,
-        border: 0
-      },
+      border: 0,
       [child(classes.row)]: {
         margin: 0,
         border: 0,
