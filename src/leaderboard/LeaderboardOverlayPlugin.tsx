@@ -213,7 +213,7 @@ const LeaderboardGrid = styled("div", { name: "LeaderboardGrid" })(({ theme }) =
 
 export interface LeaderboardViewProps extends IPluginComponentProps {}
 
-function LeaderboardView({ width, height, client, ...other }: LeaderboardViewProps) {
+function LeaderboardView({ width, height, sessionId, client, ...other }: LeaderboardViewProps) {
   const
       visibleRows = Math.floor((height - Heights.header) / Heights.row),
       overlayInfo = client.getOverlayInfo(),
