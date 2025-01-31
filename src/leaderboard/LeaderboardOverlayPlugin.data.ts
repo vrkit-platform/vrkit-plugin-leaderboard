@@ -10,7 +10,7 @@ import { asOption } from "@3fv/prelude-ts"
 import { getLogger } from "@3fv/logger-proxy"
 import { isNotEmptyString, Pair } from "@vrkit-platform/shared"
 import { padStart, partition } from "lodash"
-import { isNumber, isString } from "@3fv/guard"
+import { isFunction, isNumber, isString } from "@3fv/guard"
 
 const log = getLogger(__filename)
 
@@ -114,7 +114,9 @@ export interface RaceInfo {
   sessionTimeRemaining: number
 
   sessionTime: number
+
   sessionNum: number
+
   isTimedRace: boolean
 
   playerIdx: number
@@ -208,8 +210,7 @@ export function updateRaceInfo(
       .map(sessionNum => sessionInfo.sessionInfo?.sessions?.find?.(it => it.sessionNum === sessionNum))
       .map(subSessionInfo => subSessionInfo?.sessionType as IRacingSessionType)
       .getOrElse(IRacingSessionType.RACE)
-  
-  
+
   const raceInfo: RaceInfo = {
     sof: totalStrength / data.length,
     weather: "",
@@ -263,6 +264,7 @@ export function updateDriverInfo(
       idx: driver.carIdx,
       carNumber: driver.carNumber,
       ...asOption(sessionInfo.qualifyResultsInfo)
+        .filter(q => isFunction(q?.results?.find))
         .map(q => q.results.find(r => r.carIdx === driver.carIdx))
         .map(r => ({
           qualifiedPosition: r.position,
@@ -411,7 +413,7 @@ export function updateCarData(
     // return cars.sort((a, b) => b.relativeTimeToPlayer -
     // a.relativeTimeToPlayer)
   }
-  
+
   const leaderCar = cars.find(data => data.position === 1)
   if (leaderCar) {
     cars.forEach(car => {
@@ -419,7 +421,7 @@ export function updateCarData(
         car.timeToLeader = 0
       } else {
         const deltaDist = leaderCar.totalDistance - car.totalDistance
-        
+
         car.timeToLeader = deltaDist / car.estSpeed
       }
     })
