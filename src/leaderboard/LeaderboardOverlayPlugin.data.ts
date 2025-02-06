@@ -1,9 +1,13 @@
 import "@vrkit-platform/plugin-sdk"
 import type { SessionInfoMessage } from "@vrkit-platform/plugin-sdk"
 import {
+  SessionCarStatus,
   SessionDataAccess,
   SessionDataVariableValueMap,
   SessionDataVarNamesKey,
+  SessionSubTimingType,
+  SessionSubType,
+  SessionTiming,
   toSessionDataVarNames
 } from "@vrkit-platform/models"
 import { asOption } from "@3fv/prelude-ts"
@@ -82,21 +86,9 @@ export const DataVarNames = toSessionDataVarNames(
 
 export type DataVarNamesKey = SessionDataVarNamesKey<typeof DataVarNames>
 
-export enum IRacingSessionState {
-  INVALID = 0,
-  GET_IN_CAR = 1,
-  WARMUP = 3,
-  PARADE_LAPS = 4,
-  RACE = 5,
-  CHECKERED = 6,
-  COOLDOWN = 7
-}
+export const IRacingSessionState = SessionCarStatus
 
-export enum IRacingSessionType {
-  PRACTICE = "PRACTICE",
-  QUALIFY = "QUALIFY",
-  RACE = "RACE"
-}
+export const IRacingSessionType = SessionSubType
 
 export interface RaceInfo {
   trackName: string
@@ -114,6 +106,8 @@ export interface RaceInfo {
   sessionTimeRemaining: number
 
   sessionTime: number
+  
+  sessionTimeTotal: number
 
   sessionNum: number
 
@@ -123,9 +117,9 @@ export interface RaceInfo {
 
   playerCarData: CarData
 
-  sessionState: IRacingSessionState
+  sessionCarStatus: SessionCarStatus
 
-  sessionType: IRacingSessionType
+  sessionType: SessionSubType
 }
 
 export interface DriverInfo {
@@ -195,6 +189,7 @@ export interface CarData {
 
 export function updateRaceInfo(
   sessionInfo: SessionInfoMessage,
+  sessionTiming: SessionTiming,
   carDatas: CarData[],
   dataVarValues: SessionDataVariableValueMap
 ): RaceInfo {
@@ -204,25 +199,22 @@ export function updateRaceInfo(
   const dataAccess = SessionDataAccess.create(dataVarValues, DataVarNames),
     data = carDatas.filter(data => !!data.driver),
     totalStrength = data.reduce((totalStrength, data) => totalStrength + data.driver.iRating, 0),
-    sessionNum = dataAccess.getNumber("SessionNum"),
-    sessionType = asOption(sessionNum)
-      .filter(it => it >= 0)
-      .map(sessionNum => sessionInfo.sessionInfo?.sessions?.find?.(it => it.sessionNum === sessionNum))
-      .map(subSessionInfo => subSessionInfo?.sessionType as IRacingSessionType)
-      .getOrElse(IRacingSessionType.RACE)
+    // sessionNum = dataAccess.getNumber("SessionNum"),
+    sessionType = sessionTiming?.sessionSubType
 
   const raceInfo: RaceInfo = {
     sof: totalStrength / data.length,
     weather: "",
     trackName: sessionInfo?.weekendInfo?.trackDisplayName ?? "",
     trackLength: getTrackLength(sessionInfo),
-    lap: dataAccess.getNumber("RaceLaps"),
-    lapsRemaining: dataAccess.getNumber("SessionLapsRemain"),
-    sessionTimeRemaining: dataAccess.getNumber("SessionTimeRemain"),
-    sessionTime: dataAccess.getNumber("SessionTime"),
-    isTimedRace: true,
-    sessionNum,
-    sessionState: dataAccess.getNumber("SessionState"),
+    lap: sessionTiming.sessionSubLap,
+    lapsRemaining: sessionTiming.sessionSubLapRemaining,
+    sessionTimeRemaining: sessionTiming.sessionSubTimeRemaining,
+    sessionTime: sessionTiming.sessionSubTime,
+    sessionTimeTotal: sessionTiming.sessionSubTimeTotal,
+    isTimedRace: sessionTiming.sessionSubTimingType === SessionSubTimingType.TIMED,
+    sessionNum: sessionTiming.sessionSubNum,
+    sessionCarStatus: dataAccess.getNumber("SessionState"),
     sessionType,
     playerIdx: sessionInfo.driverInfo.driverCarIdx,
     playerCarData: data.find(data => data.driver.isPlayer)
@@ -233,7 +225,8 @@ export function updateRaceInfo(
 
 export function updateDriverInfo(
   driverInfoMap: Record<number, DriverInfo>,
-  sessionInfo: SessionInfoMessage
+  sessionInfo: SessionInfoMessage,
+  sessionTiming: SessionTiming
 ): Record<number, DriverInfo> {
   const drivers = sessionInfo?.driverInfo?.drivers
 
@@ -295,6 +288,7 @@ export type LeaderboardMode = "RELATIVE" | "STANDINGS"
 export function updateCarData(
   mode: LeaderboardMode,
   sessionInfo: SessionInfoMessage,
+  sessionTiming: SessionTiming,
   driverInfoMap: Record<number, DriverInfo>,
   dataVarValues: SessionDataVariableValueMap
 ): CarData[] {

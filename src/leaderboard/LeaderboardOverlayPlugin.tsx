@@ -8,7 +8,8 @@ import {
 import Box from "@mui/material/Box"
 import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { createTheme, styled, ThemeProvider } from "@mui/material/styles"
-import { SessionDataVariableValueMap, SessionTiming } from "@vrkit-platform/models"
+import {
+  GetEnumLabel, SessionDataVariableValueMap, SessionSubType, SessionTiming } from "@vrkit-platform/models"
 import {
   child,
   createClassNames,
@@ -45,6 +46,8 @@ import clsx from "clsx"
 import { capitalize, debounce, range, throttle } from "lodash"
 import { asOption } from "@3fv/prelude-ts"
 import { isNotEmpty } from "@vrkit-platform/shared"
+import { isNumber } from "@3fv/guard"
+import { isString } from "@3fv/guard"
 
 const log = getLogger(__filename)
 
@@ -223,11 +226,13 @@ function LeaderboardView({ width, height, sessionId, client, ...other }: Leaderb
       .filter(isNotEmpty)
       .getOrElse("STANDINGS" satisfies LeaderboardMode) as LeaderboardMode,
     [raceInfo, setRaceInfo] = useState<RaceInfo>(),
-    [driverInfoMap, setDriverInfoMap] = useState<Record<number, DriverInfo>>(() =>
-      updateDriverInfo({}, client.getSessionInfo())
+      [sessionTiming, setSessionTiming] = useState<SessionTiming>(null),
+      [driverInfoMap, setDriverInfoMap] = useState<Record<number, DriverInfo>>(() =>
+      updateDriverInfo({}, client.getSessionInfo(), sessionTiming)
     ),
     [carDatas, setCarDatas] = useState<Array<CarData>>([]),
     [dataVarValues, setDataVarValues] = useState<SessionDataVariableValueMap>({}),
+    
     sessionInfo = useVRKitPluginClientSessionInfo(),
     hasCarData = carDatas.length > 0,
     hasDriverInfo = Object.keys(driverInfoMap).length > 0,
@@ -235,12 +240,13 @@ function LeaderboardView({ width, height, sessionId, client, ...other }: Leaderb
       () =>
         throttle((sessionId: string, timing: SessionTiming, newDataVarValues: SessionDataVariableValueMap) => {
           setDataVarValues(newDataVarValues)
+          setSessionTiming(timing)
         }, 100),
       []
     )
 
   useEffect(() => {
-    setDriverInfoMap(driverInfoMap => updateDriverInfo(driverInfoMap, client.getSessionInfo()))
+    setDriverInfoMap(driverInfoMap => updateDriverInfo(driverInfoMap, client.getSessionInfo(),sessionTiming))
   }, [sessionInfo])
 
   useEffect(() => {
@@ -251,8 +257,8 @@ function LeaderboardView({ width, height, sessionId, client, ...other }: Leaderb
       hasDriverInfo &&
       Object.keys(dataVarValues).length > 0
     ) {
-      const newCarDatas = updateCarData(viewMode, sessionInfo, driverInfoMap, dataVarValues)
-      const newRaceInfo = updateRaceInfo(sessionInfo, newCarDatas, dataVarValues)
+      const newCarDatas = updateCarData(viewMode, sessionInfo, sessionTiming,driverInfoMap, dataVarValues)
+      const newRaceInfo = updateRaceInfo(sessionInfo,sessionTiming, newCarDatas, dataVarValues)
       setCarDatas(newCarDatas)
       setRaceInfo(newRaceInfo)
     }
@@ -278,7 +284,9 @@ function LeaderboardView({ width, height, sessionId, client, ...other }: Leaderb
       <LeaderboardViewRoot {...other}>
         <LeaderboardGrid className={clsx(classes.grid)}>
           <div className={clsx(classes.row)}>
-            <FlexAutoBox>{capitalize(raceInfo.sessionType)}</FlexAutoBox>
+            <FlexAutoBox>{
+              capitalize(SessionSubType[raceInfo.sessionType])
+            }</FlexAutoBox>
             <FlexScaleZeroBox
               sx={{
                 ...Ellipsis,
@@ -291,8 +299,8 @@ function LeaderboardView({ width, height, sessionId, client, ...other }: Leaderb
               SoF {(raceInfo?.sof / 1000.0).toFixed(1)}K
             </FlexScaleZeroBox>
             <FlexAutoBox>
-              <DurationView millis={raceInfo.sessionTime * 1000} /> /
-              <DurationView millis={raceInfo.sessionTimeRemaining * 1000} />
+              <DurationView millis={raceInfo.sessionTime} /> /
+              <DurationView millis={raceInfo.sessionTimeRemaining} />
               {/*{raceInfo.lap}/{raceInfo.lapsRemaining + raceInfo.lap}*/}
             </FlexAutoBox>
           </div>
