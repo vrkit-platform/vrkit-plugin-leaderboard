@@ -2,7 +2,7 @@
   "name": "@vrkit-platform/plugin-leaderboard",
   "version": "1.0.19",
   "description": "VRKit Platform Leaderboard Plugin",
-  "license": "ISC",
+  "license": "MIT",
   "private": false,
   "publishConfig": {
     "access": "public"
